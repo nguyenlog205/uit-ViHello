@@ -1,0 +1,85 @@
+\documentclass[12pt,a4paper]{report}
+
+% --- Essential Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec} 
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{geometry}
+
+\geometry{
+    a4paper,
+    left=1in,   % Lề trái
+    right=1in,  % Lề phải
+    top=1in,    % Lề trên
+    bottom=1in  % Lề dưới
+}
+
+% --- Custom Colors for Code ---
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.96,0.96,0.96}
+\definecolor{commandblue}{rgb}{0.1,0.2,0.6}
+
+% --- Listings Configuration (Đẹp mắt & Chuyên nghiệp) ---
+\lstdefinestyle{modernstyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=8pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    frame=lines, % Đường kẻ trên và dưới trông rất sang trọng
+    rulecolor=\color{black!20},
+    xleftmargin=15pt,
+    framexleftmargin=15pt
+}
+
+\lstset{style=modernstyle}
+
+% Customizing Chapter Titles
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\huge}
+  {\chaptertitlename\ \thechapter}{10pt}{\Huge}
+
+\usepackage[most]{tcolorbox}
+
+\newtcolorbox{graybox}{
+    colback=gray!10, 
+    colframe=gray!50, 
+    sharp corners,
+    boxrule=0.5pt,
+    enhanced,
+}
+
+\begin{document}
+
+\title{\textbf{Building a tinyGPT from scratch}}
+\author{Composed by ZhenAn.}
+% \date{January 2026}
+\maketitle
+
+\tableofcontents
+
+\include{src/chapter01}
+\include{src/chapter02}
+\include{src/chapter03}
+
+\end{document}

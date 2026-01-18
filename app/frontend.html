@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinyGPT Chatbot</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f4f7f6;
+            --chat-bg: #ffffff;
+            --user-msg: #007bff;
+            --bot-msg: #e9e9eb;
+            --status-online: #2ecc71;
+            --status-offline: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 400px;
+            height: 600px;
+            background: var(--chat-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bot-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* CSS cho phần Status */
+        .status-badge {
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--status-offline); /* Mặc định offline */
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+
+        .status-text {
+            font-weight: 500;
+        }
+
+        /* Class trạng thái */
+        .online .status-dot { background-color: var(--status-online); box-shadow: 0 0 8px var(--status-online); }
+        .offline .status-dot { background-color: var(--status-offline); }
+        .checking .status-dot { background-color: #f1c40f; } /* Màu vàng khi đang check */
+
+        #chat-window {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .user {
+            align-self: flex-end;
+            background-color: var(--user-msg);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .bot {
+            align-self: flex-start;
+            background-color: var(--bot-msg);
+            color: #333;
+            border-bottom-left-radius: 2px;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #eee;
+            background: #fff;
+        }
+
+        input {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 10px 15px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        input:focus { border-color: var(--primary-color); }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        button:hover { transform: scale(1.1); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .loading { font-style: italic; color: #888; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="header-info">
+            <div class="bot-name">TinyGPT Assistant</div>
+        </div>
+        <div id="status-display" class="status-badge offline">
+            <span class="status-dot"></span>
+            <span class="status-text" id="status-label">Offline</span>
+        </div>
+    </div>
+
+    <div id="chat-window">
+        <div class="message bot">Chào bạn! Tôi là TinyGPT. Backend status đang được kiểm tra...</div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Type a message..." onkeypress="handleKey(event)">
+        <button id="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    const chatWindow = document.getElementById('chat-window');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const statusDisplay = document.getElementById('status-display');
+    const statusLabel = document.getElementById('status-label');
+
+    // Cấu hình URL backend
+    const BACKEND_URL = 'http://localhost:8000'; 
+    const CHAT_ENDPOINT = '/chat';
+
+    function handleKey(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+
+    function addMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+        msgDiv.innerText = text;
+        chatWindow.appendChild(msgDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // --- CHỨC NĂNG KIỂM TRA STATUS ---
+    async function checkBackendStatus() {
+        try {
+            // Gửi request nhẹ đến server (thường là root "/" hoặc endpoint sức khỏe)
+            // Lưu ý: Đảm bảo FastAPI của bạn có route "/" hoặc đổi đường dẫn bên dưới
+            const response = await fetch(BACKEND_URL + '/', { 
+                method: 'GET',
+                // Timeout ngắn để báo lỗi nhanh nếu server chết
+                signal: AbortSignal.timeout(2000) 
+            });
+
+            if (response.ok) {
+                updateStatus(true);
+            } else {
+                updateStatus(false);
+            }
+        } catch (error) {
+            updateStatus(false);
+        }
+    }
+
+    function updateStatus(isOnline) {
+        if (isOnline) {
+            statusDisplay.className = 'status-badge online';
+            statusLabel.innerText = 'Online';
+            sendBtn.disabled = false;
+        } else {
+            statusDisplay.className = 'status-badge offline';
+            statusLabel.innerText = 'Offline';
+            // Tùy chọn: Có thể disable nút gửi nếu server chết
+            // sendBtn.disabled = true; 
+        }
+    }
+
+    // Chạy kiểm tra ngay khi load trang
+    checkBackendStatus();
+
+    // Thiết lập vòng lặp kiểm tra mỗi 5 giây
+    setInterval(checkBackendStatus, 5000);
+
+    // --- CHỨC NĂNG CHAT ---
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        userInput.value = '';
+
+        // Hiệu ứng chờ
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'message bot loading';
+        loadingDiv.innerText = 'TinyGPT is thinking...';
+        chatWindow.appendChild(loadingDiv);
+
+        try {
+            const response = await fetch(BACKEND_URL + CHAT_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: text, max_tokens: 100 }) // Tăng max_tokens lên xíu
+            });
+
+            const data = await response.json();
+            chatWindow.removeChild(loadingDiv);
+            addMessage(data.response || "Mô hình không đưa ra câu trả lời.", 'bot');
+            
+            // Nếu gửi tin nhắn thành công, chắc chắn server đang online
+            updateStatus(true);
+
+        } catch (error) {
+            chatWindow.removeChild(loadingDiv);
+            addMessage("Lỗi: Không thể kết nối tới server!", 'bot');
+            console.error(error);
+            // Nếu lỗi mạng, cập nhật status offline ngay lập tức
+            updateStatus(false);
+        }
+    }
+</script>
+
+</body>
+</html>

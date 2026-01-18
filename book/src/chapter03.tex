@@ -1,0 +1,154 @@
+\chapter{Start building a tinyGPT}
+
+% =================================================================
+% Model backbone
+% =================================================================
+\section{Model backbone}
+
+
+
+\subsection{Causal self-attention}
+\subsubsection{Linear projections and semantic mapping}
+The fundamental operation of the Transformer decoder involves mapping an input sequence $X \in \mathbb{R}^{T \times d_{\text{model}}}$ into three distinct functional representations. This is achieved through learned affine transformations parameterized by the weight matrices $W_Q, W_K \in \mathbb{R}^{d_{\text{model}} \times d_k}$ and $W_V \in \mathbb{R}^{d_{\text{model}} \times d_v}$. The projections yield the Query ($Q$), Key ($K$), and Value ($V$) matrices:
+
+\begin{equation}
+    Q = XW_Q, \quad K = XW_K, \quad V = XW_V
+\end{equation}
+
+These projections allow the model to decouple the specific role each token plays during the retrieval process: $Q$ represents the current search criteria, $K$ denotes the characteristics against which queries are matched, and $V$ contains the substantive information to be propagated.
+
+\subsubsection{Variance stabilization and numerical stability}
+The raw affinity between tokens at positions $i$ and $j$ is quantified by the dot product $q_i \cdot k_j^T$. From a probabilistic perspective, consider the components of $q_i$ and $k_j$ as independent random variables with $\mathbb{E}[q_{im}] = \mathbb{E}[k_{jm}] = 0$ and $\text{Var}(q_{im}) = \text{Var}(k_{jm}) = 1$. The variance of their dot product is given by:
+
+\begin{equation}
+    \text{Var}(q_i \cdot k_j) = \sum_{m=1}^{d_k} \text{Var}(q_{im}k_{jm}) = d_k
+\end{equation}
+
+As the dimensionality $d_k$ increases, the magnitude of these dot products grows, effectively pushing the input to the softmax function into regions of extreme saturation. In these regions, the gradient of the softmax function, $\nabla \sigma$, approaches zero, precipitating the vanishing gradient problem during backpropagation. To ensure the preservation of unit variance and maintain numerical stability, the scores are attenuated by a scaling factor of $1/\sqrt{d_k}$.
+
+\subsubsection{The attention operator}
+The final contextualized representation $Z$ is computed by aggregating the value vectors according to the normalized attention weights. To maintain the autoregressive property required for generative tasks, a causal mask $\mathcal{M}$ is introduced to prevent information leakage from future tokens. The operator is defined as:
+
+\begin{equation}
+    \text{Attention}(Q, K, V) = \sigma \left( \frac{QK^T + \mathcal{M}}{\sqrt{d_k}} \right) V
+\end{equation}
+
+where $\sigma(\cdot)$ denotes the row-wise softmax activation:
+\begin{equation}
+    \sigma(\mathbf{z})_i = \frac{\exp(z_i)}{\sum_{j=1}^{T} \exp(z_j)}
+\end{equation}
+
+The mask $\mathcal{M} \in \{0, -\infty\}^{T \times T}$ is a lower-triangular matrix where $\mathcal{M}_{ij} = -\infty$ for all $j > i$. This additive identity ensures that the softmax distribution assigns zero probability to subsequent positions, strictly constraining the representation at index $i$ to be a function of the prefix sequence $X_{\le i}$.
+
+% ----------------------------------------------
+% Transformer Block
+\subsection{Transformer block}
+The \texttt{Block} class serves as the fundamental unit of the GPT backbone, encapsulating two distinct operations: inter-token communication and individual token computation. By stacking these blocks, the model can iteratively refine its understanding of the sequence.
+
+\subsubsection{The Pre-LN architecture and the residual stream}
+In modern generative models, the arrangement of components follows the Pre-Layer Normalization (Pre-LN) convention. Unlike the original Transformer, which normalized signals after the residual addition, Pre-LN applies \texttt{LayerNorm} before each sub-layer.
+
+This creates a "clean" residual stream (the identity path), allowing gradients to flow unimpeded from the output back to the input layers. The forward pass through a single block is defined by the following system of equations:
+
+\begin{equation} 
+    x_{mid} = x_{in} + \text{Attention}(\text{LN}_1(x_{in})) 
+\end{equation} 
+\begin{equation} 
+    x_{out} = x_{mid} + \text{MLP}(\text{LN}_2(x_{mid})) 
+\end{equation}
+
+By stabilizing the variance of activations before they enter the high-variance attention and feed-forward operations, Pre-LN facilitates the use of higher learning rates and significantly improves training stability in deep architectures.
+\subsubsection{Explain more detailed about LN, MLP \& GELU}
+The internal logic of the Transformer block is governed by three critical components that manage stability and expressivity.
+
+\textbf{a) Layer normalization}
+
+To facilitate the training of deep architectures, Layer Normalization is utilized to standardize the distribution of hidden states. For a given input vector $\mathbf{x}$, the operation is defined as:
+\begin{equation}
+    \text{LN}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta
+\end{equation}
+where $\mu$ and $\sigma$ are the mean and standard deviation of the features, while $\gamma$ and $\beta$ are learnable affine parameters.
+
+\textbf{b) MLP with GELU activation}
+
+The MLP sub-layer provides the model's computational capacity. It utilizes a bottleneck structure to project tokens into a higher-dimensional manifold for feature extraction:
+\begin{equation}
+    \text{MLP}(\mathbf{x}) = \text{GELU}(\mathbf{x}\mathbf{W}_1 + \mathbf{b}_1)\mathbf{W}_2 + \mathbf{b}_2
+\end{equation}
+In this implementation, $\mathbf{W}_1 \in \mathbb{R}^{d_{model} \times 4d_{model}}$, providing a four-fold expansion of the latent space.
+
+
+The \textbf{Gaussian Error Linear Unit (GELU)} introduces non-linearity by weighting the input by its cumulative distribution function:
+\begin{equation}
+    \text{GELU}(x) = x \cdot \Phi(x) = \frac{x}{2}\left[1 + \text{erf}\left(\frac{x}{\sqrt{2}}\right)\right]
+\end{equation}
+The smoothness of GELU allows for more nuanced gradient updates compared to the piecewise-linear ReLU function.
+
+% -----------------------------------------------------
+% The tinyGPT
+\subsection{The tinyGPT}
+The final architecture integrates the modular components into a cohesive autoregressive model. The process begins with the fusion of semantic and temporal information.
+
+\subsubsection{Positional Integration}
+Since the self-attention mechanism is permutation-invariant, we must inject positional information. We utilize a \textbf{Learned Positional Embedding} matrix $W_p \in \mathbb{R}^{T \times C}$. The input to the first Transformer block is defined as:
+\begin{equation}
+    \mathbf{x}_0 = \text{Embedding}_{token}(idx) + \text{Embedding}_{pos}(pos)
+\end{equation}
+
+\subsubsection{The Transformer stack and head for each loop}
+The vector $\mathbf{x}_0$ propagates through a sequence of $L$ blocks, where each block performs the \textit{Attention} and \textit{MLP} operations. The output of the final block, $\mathbf{x}_L$, represents a fully contextualized hidden state that captures the relationships between all preceding tokens.
+
+To derive a prediction, the model must map this continuous vector back into the discrete vocabulary space. First, a final \textbf{LayerNorm} is applied to stabilize the cumulative variance from the stack. Then, the \textbf{Language Modeling Head} (a linear projection) computes the \textit{Logits}:
+\begin{equation}
+    \text{Logits} = \text{LayerNorm}(\mathbf{x}_L) \mathbf{W}_{vocab}^T
+\end{equation}
+
+In an autoregressive loop, the token corresponding to the highest logit is appended to the input sequence. This updated sequence then serves as the input for the subsequent forward pass. This iterative cycle allows the model to generate text token-by-token, where each new prediction is conditioned on the entire history of previously generated tokens.
+
+\subsubsection{The inference mechanism for sequence generation}
+The generation of long-form text is achieved through an \textbf{autoregressive feedback loop}. This mechanism ensures that each generated token is conditioned on the entire preceding context.
+
+Given an initial prompt $S = \{t_1, t_2, \dots, t_n\}$, the model performs a forward pass to compute the probability distribution for the next token $t_{n+1}$:
+\begin{equation}
+    P(t_{n+1} | t_1, \dots, t_n) = \text{Softmax}(\text{tinyGPT}(S))
+\end{equation}
+Once $t_{n+1}$ is sampled, it is appended to $S$, and the updated sequence $S' = \{t_1, \dots, t_{n+1}\}$ is used for the subsequent iteration. This cycle continues until a predefined maximum length or an \texttt{<EOS>} token is reached.
+
+Due to the quadratic complexity of the self-attention mechanism, the input sequence is constrained by the \texttt{block\_size}. If the generated text exceeds this limit, the model utilizes a \textbf{sliding window approach}, retaining only the most recent $T$ tokens. This ensures that the positional embeddings and attention masks remain consistent with the architecture's design limits.
+
+
+% =============================================================
+% Dataset
+% =============================================================
+\section{Dataset}
+
+
+\section{Training}
+\subsection{Configuration}
+\begin{verbatim}
+from dataclasses import dataclass
+
+@dataclass
+class GPTConfig:
+    block_size: int = 256     # Maximum context length
+    vocab_size: int = 50257   # Size of the dictionary
+    n_layer: int = 12         # Number of Transformer blocks
+    n_head: int = 12          # Number of attention heads
+    n_embd: int = 768         # Embedding dimension
+
+config = GPTConfig()
+model = tinyGPT(config)
+
+# 3. Prepare dummy input (B=4 batch size, T=8 sequence length)
+# Example: "The dog sat on the mat" encoded as integers
+idx = torch.randint(0, config.vocab_size, (4, 8)) 
+
+# 4. Forward pass
+logits = model(idx)
+print(logits.shape) # Should output: torch.Size([4, 8, 50257])
+\end{verbatim}
+\subsection{Training}
+
+\subsection{Evaluation}
+
+\section{Model deployment}

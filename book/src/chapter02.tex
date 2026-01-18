@@ -1,0 +1,95 @@
+\chapter{The evolution of language model}
+In modern artificial intelligence, while the underlying architectures have transitioned from simple statistical counts to massive neural networks, the fundamental objective remains rooted in the principles of sequence estimation, that is primarily defined by how the conditional distribution $P(w_t \mid w_{<t})$ is parameterized.
+
+\section{Statistical N-gram models}
+Early approaches relied on the $k$-th order Markov sssumption, which posits that the probability of a token depends only on a local window of the preceding $k-1$ tokens:$$P(w_t \mid w_1, \dots, w_{t-1}) \approx P(w_t \mid w_{t-k+1}, \dots, w_{t-1})$$
+
+\subsection{Bi-gram models}
+In a Bigram approach, the Markov assumption simplifies the joint probability so that each token is conditioned only on the single immediate predecessor. The joint probability $P(\text{The, dog, sat})$ is factorized as:
+$$P(\text{The, dog, sat}) \approx P(\text{The}) \times P(\text{dog} \mid \text{The}) \times P(\text{sat} \mid \text{dog})$$
+The transition probabilities are calculated by counting occurrences within a training corpus. For instance, to calculate $P(\text{sat} \mid \text{dog})$, the model computes:$$P(\text{sat} \mid \text{dog}) = \frac{\text{Count}(\text{dog, sat})}{\text{Count}(\text{dog})}$$
+
+\subsection{Tri-gram models}
+A Trigram model ($k=3$) represents a significant step up in contextual awareness from the Bigram approach. By expanding the Markov window to include the two preceding tokens, the model begins to capture more complex linguistic structures, such as subject-verb-object relationships.In a Trigram model, the conditional probability is defined as:$$P(w_t \mid w_1, \dots, w_{t-1}) \approx P(w_t \mid w_{t-2}, w_{t-1})$$
+For the sequence $\mathbf{w} = (\text{The, dog, sat})$, the joint probability is decomposed into a product of trigram components. Note that the first two tokens utilize lower-order models (Unigram and Bigram) to initialize the sequence:$$P(\text{The, dog, sat}) \approx P(\text{The}) \times P(\text{dog} \mid \text{The}) \times P(\text{sat} \mid \text{The, dog})$$
+
+\subsection{N-gram models}
+The N-gram model is the generalized form of the Markov chain approach to language modeling. While Bi-grams and Tri-grams look at one or two preceding tokens, an N-gram model looks at $n-1$ previous tokens to predict the $n$-th token.
+
+In an N-gram model, we assume that the probability of a word depends only on the $n-1$ words immediately preceding it. This is known as a Markov chain of order $n-1$. The conditional probability is defined as:
+$$P(w_t \mid w_1, \dots, w_{t-1}) \approx P(w_t \mid w_{t-n+1}, \dots, w_{t-1})$$
+
+The joint probability of an entire sequence $\mathbf{w} = (w_1, \dots, w_T)$ is therefore factorized as:$$P(w_1, \dots, w_T) = \prod_{t=1}^{T} P(w_t \mid w_{t-n+1}, \dots, w_{t-1})$$
+
+The transition probabilities are estimated using Maximum Likelihood Estimation (MLE) from a large corpus by calculating the ratio of sequence frequencies:$$P(w_t \mid w_{t-n+1}, \dots, w_{t-1}) = \frac{\text{Count}(w_{t-n+1}, \dots, w_t)}{\text{Count}(w_{t-n+1}, \dots, w_{t-1})}$$
+
+% ======================================================
+% Traditional dl
+% ======================================================
+\section{Traditional deep learning approaches}
+Traditional deep learning for NLP shifted the focus from counting word frequencies to learning continuous vector representations. These models process tokens sequentially, maintaining an internal state that evolves over time.
+
+\subsection{Recurrent Neural Networks}
+The Recurrent Neural Network (RNN) represents a shift from fixed-window counting to a dynamic system capable of processing variable-length sequences. Unlike N-grams, which explicitly look back $n$ steps, an RNN attempts to compress the entire history of a sequence into a single, fixed-size hidden vector $\mathbf{h}_t$.
+
+\subsubsection{Modeling conditional probabilities}
+From a probabilistic perspective, an RNN models the joint probability of a sequence by approximating the conditional probability of each token. It assumes that the probability of the current token $w_t$ is conditioned on a latent representation of all previous tokens:
+$$P(w_t \mid w_{t-1}, w_{t-2}, \dots, w_1) \approx P(w_t \mid \mathbf{h}_{t-1})$$
+where $\mathbf{h}_{t-1}$ is the hidden state summarizing the prefix $w_{<t}$.
+
+\subsubsection{The recursive update rule}
+At each time step $t$, the model performs a recursive transformation. It consumes the current input vector $\mathbf{x}_t$ (the embedding of $w_t$) and the previous hidden state $\mathbf{h}_{t-1}$ to compute the next state:
+$$\mathbf{h}_t = \sigma(\mathbf{W}_{hh} \mathbf{h}_{t-1} + \mathbf{W}_{xh} \mathbf{x}_t + \mathbf{b}_h)$$
+
+where:
+\begin{itemize}
+    \item[-] $\mathbf{W}_{hh}$ is the recurrent weight matrix (captures temporal dependencies).
+    \item[-] $\mathbf{W}_{xh}$ is the input weight matrix (captures current token features).
+    \item[-] $\sigma$ is a non-linear activation function, typically $\tanh$ or $\text{ReLU}$.
+\end{itemize}
+
+\subsubsection{The vanishing gradient problem}
+Despite their theoretical ability to maintain infinite memory, RNNs face severe practical limitations during training via \textbf{Backpropagation Through Time (BPTT)}. Because the same weight matrix $\mathbf{W}_{hh}$ is multiplied repeatedly at every step, the gradient of the loss with respect to early inputs involves a product of many Jacobian matrices.
+
+If the eigenvalues of $\mathbf{W}_{hh}$ are small, the gradients decay exponentially ($0.9^{100} \approx 0$). This problem means the model effectively "forgets" distant context, reducing it to a short-term memory model that struggles with long-range dependencies, such as subject-verb agreement across long sentences.
+
+\subsection{Long-short Term Memory (LSTM)}
+While standard RNNs struggle to maintain context, the Long Short-Term Memory (LSTM) architecture preserves the conditional probability $P(w_t \mid w_{<t})$ by replacing simple nodes with sophisticated memory cells. The core innovation is the Cell State ($c_t$), a long-term highway that evolves via a selective additive update rather than forced multiplication.
+
+By using a forget gate ($f_t$) to prune the past and an input gate ($i_t$) to scale new data, the cell performs the update $c_t = f_t \odot c_{t-1} + i_t \odot \tilde{c}_t$. This additive logic prevents the "condition" from decaying over time, allowing the model to ground its predictions in distant context that standard recurrent layers would otherwise lose.
+
+
+\subsubsection{The gating mechanism and update in cell}
+The core innovation of the LSTM is its use of gates, that are the neural layers that regulate the flow of information. These gates use a sigmoid activation ($\sigma$) to output values between 0 (completely close) and 1 (completely open).
+
+\begin{figure}[htbp] % Added more placement options for better layout
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/chapter02/gate_of_lstm.png}
+    \caption{An LSTM cell architecture} % Changed 'A' to 'An' for correct grammar
+    \label{fig:lstm-cell-architecture} % Changed \reg to \label
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{The forget gates}
+    
+    This gate looks at the previous hidden state and the current input to decide which information from the past is no longer relevant.
+    $$f_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)$$
+
+    \item \textbf{The input gate}
+    
+    This gate determines which new information from the current token is worth storing in our long-term memory.
+    $$i_t = \sigma(W_i \cdot [h_{t-1}, x_t] + b_i)$$
+
+    \item \textbf{The output gate}
+    
+    Finally, this gate decides which part of the long-term cell state should be filtered out to become the hidden state (the "short-term memory") used for the current prediction.
+    $$o_t = \sigma(W_o \cdot [h_{t-1}, x_t] + b_o)$$
+\end{enumerate}
+
+In conclusion, the interplay between these gating units allows the LSTM to overcome the vanishing gradient bottleneck inherent in standard recurrent architectures. By strategically utilizing the \textbf{forget gate} to discard obsolete information and the \textbf{input gate} to integrate novel features, the model maintains a stable and persistent \textbf{cell state} ($c_t$). 
+
+\subsubsection{Solving the vanishing gradient}
+From a probabilistic and mathematical standpoint, the LSTM avoids vanishing gradients through its Cell State Update. Unlike the RNN's multiplicative update, the LSTM updates the cell state additively:
+
+$$\mathbf{c}_t = f_t \odot \mathbf{c}_{t-1} + i_t \odot \tilde{\mathbf{c}}_t$$
+Because the gradient can flow through this additive path without being repeatedly multiplied by a weight matrix, the LSTM can maintain a "gradient highway." This allows the model to learn that a subject at the start of a paragraph is still relevant to a verb twenty tokens later.

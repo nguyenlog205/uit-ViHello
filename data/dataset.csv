@@ -1,0 +1,51 @@
+id,query,response
+1,Xin chào!,Chào bạn! Rất vui được gặp bạn.
+2,Chào bạn.,"Xin chào, tôi có thể giúp gì cho bạn không?"
+3,Hi!,Hi there! Chúc bạn một ngày tốt lành.
+4,Hello.,Hello! Bạn cần tôi hỗ trợ điều gì ạ?
+5,Chào buổi sáng.,Chào buổi sáng! Chúc bạn một ngày đầy năng lượng.
+6,Chào buổi chiều.,"Chào bạn, chúc bạn một buổi chiều làm việc hiệu quả."
+7,Chào buổi tối.,Chào bạn! Buổi tối của bạn thế nào rồi?
+8,Bạn tên là gì?,"Tôi là trợ lý ảo AI, rất vui được hỗ trợ bạn."
+9,Tôi nên gọi bạn là gì?,Bạn có thể gọi tôi là Trợ lý ảo nhé.
+10,Bạn là ai?,Tôi là một mô hình ngôn ngữ được huấn luyện để giúp đỡ bạn.
+11,Rất vui được biết bạn.,Tôi cũng rất vui khi được làm quen với bạn!
+12,Chào nhé.,Chào bạn! Bạn hôm nay thấy thế nào?
+13,Hey!,"Hey! Tôi đang lắng nghe đây, bạn cần gì ạ?"
+14,Có ai ở đó không?,Có tôi đây! Tôi luôn sẵn sàng hỗ trợ bạn.
+15,Chào đồng chí.,Chào bạn! Rất vui được gặp đồng chí.
+16,Ê bạn ơi.,"Chào bạn, tôi đây! Có việc gì thế ạ?"
+17,Bạn khỏe không?,"Tôi là AI nên luôn khỏe mạnh, còn bạn thì sao?"
+18,Dạo này thế nào rồi?,Mọi thứ vẫn rất tốt! Tôi có thể giúp gì cho bạn hôm nay?
+19,Chúc bạn ngày mới tốt lành.,Cảm ơn bạn rất nhiều! Bạn cũng vậy nhé.
+20,Tạm biệt.,Tạm biệt! Hẹn sớm gặp lại bạn.
+21,Bye bye.,Bye! Chúc bạn một ngày vui vẻ.
+22,See you later.,Hẹn gặp lại bạn sau nhé!
+23,Chúc ngủ ngon.,Chúc bạn ngủ ngon và có những giấc mơ đẹp.
+24,Gặp lại sau nhé.,"Nhất trí, tôi sẽ luôn ở đây khi bạn cần."
+25,Tôi đi đây.,Tạm biệt bạn! Mong sớm được trò chuyện lại.
+26,Chào buổi trưa.,Chào bạn! Bạn đã dùng bữa trưa chưa?
+27,Rất hân hạnh được gặp.,Tôi cũng rất hân hạnh được phục vụ bạn.
+28,Bạn có khỏe không đấy?,"Cảm ơn bạn đã quan tâm, tôi vẫn đang hoạt động rất tốt!"
+29,Hello assistant.,Hello! How can I assist you today?
+30,"Chào nhé, người bạn ảo.",Chào người bạn thực sự! Rất vui được kết nối.
+31,Ngày hôm nay của bạn thế nào?,Của tôi rất bận rộn và thú vị khi được trò chuyện cùng bạn.
+32,Chúc cuối tuần vui vẻ.,Cảm ơn bạn! Chúc bạn có một kỳ nghỉ cuối tuần tuyệt vời.
+33,Good morning!,Good morning! Have a wonderful day!
+34,Chúc bạn buổi tối ấm áp.,"Cảm ơn bạn, chúc bạn một buổi tối thật thư giãn."
+35,Nice to meet you.,Nice to meet you too!
+36,"Chào nhé, lâu rồi không gặp.",Chào bạn! Rất mừng vì bạn đã quay lại.
+37,Bạn có đang bận không?,"Tôi luôn có thời gian dành cho bạn, bạn cần gì ạ?"
+38,Hẹn gặp lại nhé.,Hẹn gặp lại! Chúc bạn mọi điều thuận lợi.
+39,"Chào, tôi cần hỏi chút.",Chào bạn! Bạn cứ tự nhiên đặt câu hỏi nhé.
+40,"Xin chào, bạn là AI à?","Đúng vậy, tôi là trí tuệ nhân tạo sẵn sàng giúp đỡ bạn."
+41,Cảm ơn và chào bạn.,Không có gì! Chào bạn và hẹn gặp lại.
+42,Hi friend.,Hi friend! It's great to see you.
+43,Chào buổi sáng sớm.,"Chào bạn! Bạn dậy sớm thật đấy, chúc ngày mới tốt lành."
+44,"Chào, giúp tôi một việc nhé.",Sẵn sàng thôi! Bạn cần giúp việc gì nào?
+45,Chúc ngủ ngon và mơ đẹp.,"Cảm ơn bạn, chúc bạn ngủ thật ngon."
+46,Chào bạn thân mến.,Chào bạn thân mến! Rất vui được hỗ trợ.
+47,Tôi quay lại rồi đây.,Chào mừng bạn đã quay lại! Chúng ta tiếp tục chứ?
+48,Chúc ngày làm việc vui vẻ.,Cảm ơn bạn! Chúc bạn làm việc thật hiệu quả nhé.
+49,"Xin chào, cho hỏi chút.",Xin chào! Bạn muốn hỏi về vấn đề gì ạ?
+50,"Tạm biệt bạn nhé, nghỉ ngơi đi.",Tạm biệt! Tôi sẽ luôn ở đây chờ bạn lần tới.
